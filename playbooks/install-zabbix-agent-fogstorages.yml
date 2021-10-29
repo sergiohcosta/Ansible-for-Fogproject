@@ -1,0 +1,73 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    zabbix_server_ip: "10.6.4.19" #zabbix4-proxy
+    #zabbix_server_ip: "10.6.4.7" #zabbix4
+    v_package_name: "zabbix-agent-5.0.4-1.el7.x86_64.rpm"
+    v_login_user:
+    v_login_password: 
+
+  tasks:
+
+  - name: Copia o pacote {{ v_package_name }} para o /root do servidor
+    copy:
+      src: /home/sergio/ansible/{{ v_package_name }}
+      dest: /root
+      owner: root
+      group: root
+      mode: 0644
+
+      #- name: Remove instalacao previa do Zabbix Agent
+      #yum:
+      #name: zabbix-agent
+      #state: absent
+
+  - name: pasta /etc/yum.repos.d
+    stat: path=/etc/yum.repos.d
+    register: yum_folder
+
+  - name: Move /etc/yum.repos.d to /etc/yum.repos.d.orig
+    command: mv /etc/yum.repos.d /etc/yum.repos.d.orig
+    when: yum_folder.stat.exists
+
+  - name: Instala o Zabbix Agent via pacote .rpm
+    yum:
+      name: /root/{{ v_package_name }}
+      state: present
+
+  - name: Enable do Zabbix Agent
+    systemd: 
+      name: zabbix-agent
+      enabled: yes
+
+  - name: Ajustes das configuracoes no arquivo zabbix_agentd.conf
+    lineinfile:
+             dest: /etc/zabbix/zabbix_agentd.conf
+             regexp: "{{ item.regexp }}"
+             line: "{{ item.line }}"
+    with_items:
+          - { regexp: '^Server=', line: 'Server={{ zabbix_server_ip }}' }
+          - { regexp: '^ServerActive=', line: '#ServerActive=' }
+          - { regexp: '^Hostname=', line: 'Hostname={{ ansible_hostname }}' }
+
+
+  - name: Disable do firewalld
+    systemd: 
+      name: firewalld
+      enabled: no
+
+  - name: Stop do firewalld
+    service:
+      name: firewalld
+      state: stopped
+
+  - name: Disable do SELinux
+    ansible.posix.selinux:
+      state: disabled
+
+  - name: Restart do servico Zabbix Agent
+    service:
+      name: zabbix-agent
+      state: restarted
+

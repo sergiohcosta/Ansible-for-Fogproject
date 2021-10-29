@@ -1,0 +1,13 @@
+---
+- hosts: all
+  gather_facts: no
+  become: yes
+  vars:
+
+  tasks:
+  
+  - name: remove a pasta orig de dentro da imagem
+    file:
+      state: absent
+      path: "/images/TOT.SIMULADO2020.W10-COMSIS/"
+

@@ -1,0 +1,63 @@
+---
+- hosts: all
+  gather_facts: no
+  become: yes
+  vars:
+    zabbix_server_ip: "10.6.4.19" #zabbix4-proxy
+    #zabbix_server_ip: "10.6.4.7" #zabbix4
+    v_package_name: "zabbix-agent-5.0.4-1.el7.x86_64.rpm"
+    v_login_user:
+    v_login_password: 
+
+  tasks:
+  
+  - name: remove a pasta orig de dentro da imagem
+    file:
+      state: absent
+      path: "/images/W10-13.05-EstacaoTrabalhoMultihardware/orig/"
+
+  - name: criar o arquivo de hash caso nao exista
+    shell: 'md5sum /images/W10-13.05-EstacaoTrabalhoMultihardware/* | sort > /images/W10-13.05-EstacaoTrabalhoMultihardware.md5'
+    #args:
+    #  creates: /images/W10-13.05-EstacaoTrabalhoMultihardware.md5
+    # when: hash_1305.stat.exists == False
+
+  - name: carrega as informacoes de hash da imagem
+    stat: path=/images/W10-13.05-EstacaoTrabalhoMultihardware.md5
+    register: hash_1305
+
+  - name: Hash do arquivo de hash
+    set_fact:
+      md5_atual: "{{ hash_1305.stat.checksum }}"  
+
+  - name: enviar o conteudo do hash md5 original
+    copy:
+      src: /home/sergio/ansible/W10-13.05-EstacaoTrabalhoMultihardware.md5
+      dest: /home/samc
+      owner: samc
+      group: samc
+      mode: 0644
+      backup: yes
+      force: yes
+  
+
+  - name: carrega as informacoes do arquivo de hash original
+    stat: path=/home/samc/W10-13.05-EstacaoTrabalhoMultihardware.md5
+    register: hash_1305_orig
+
+  - name: Hash do arquivo de hash original
+    set_fact:
+      md5_orig: "{{ hash_1305_orig.stat.checksum }}"  
+
+
+  - name: fazer um diff dos arquivos de hash
+    command: 'diff /images/W10-13.05-EstacaoTrabalhoMultihardware.md5 /home/samc/W10-13.05-EstacaoTrabalhoMultihardware.md5'
+    register: diff_result
+    when:  md5_atual != md5_orig
+    ignore_errors: true
+
+
+  - name: diferenca entre os arquivos se houver
+    debug:
+      var: diff_result.stdout_lines
+    when:  md5_atual != md5_orig

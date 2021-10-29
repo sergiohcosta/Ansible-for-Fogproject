@@ -1,0 +1,28 @@
+---
+- hosts: all
+  # gather_facts: no
+  become: yes
+  vars:
+    pathimages: /images
+    imagename: W10-13.07-EstacaoTrabalhoMultihardware
+    pathimage: "{{pathimages}}/{{imagename}}"
+
+  tasks:
+  
+  - name: Encontrar pastas
+    register: r
+    find:
+      paths: /images
+      file_type: directory
+      patterns: ['W10-13.0[0-6]-EstacaoTrabalhoMultihardware']
+      use_regex: yes
+
+  
+  - name: Encontrados
+    debug:
+      msg: "{{item.path}}"
+      #msg: "{{item}}"
+    #when: r.matched != 1
+    with_items:
+    - "{{r.files}}"
+    

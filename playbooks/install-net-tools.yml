@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    v_package_name: "net-tools-2.0-0.25.20131004git.el7.x86_64.rpm"
+
+  tasks:
+
+  - name: Copia o pacote {{ v_package_name }} para o /root do servidor
+    copy:
+      src: /home/sergio/ansible/{{ v_package_name }}
+      dest: /root
+      owner: root
+      group: root
+      mode: 0644
+
+      #- name: Remove instalacao previa do Zabbix Agent
+      #yum:
+      #name: zabbix-agent
+      #state: absent
+
+  - name: pasta /etc/yum.repos.d
+    stat: path=/etc/yum.repos.d
+    register: yum_folder
+
+  - name: Move /etc/yum.repos.d to /etc/yum.repos.d.orig
+    command: mv /etc/yum.repos.d /etc/yum.repos.d.orig
+    when: yum_folder.stat.exists
+
+  - name: Instala o Zabbix Agent via pacote .rpm
+    yum:
+      name: /root/{{ v_package_name }}
+      state: present
+
+

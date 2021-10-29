@@ -1,0 +1,25 @@
+---
+- hosts: all
+  gather_facts: yes
+  tasks:
+          #    - name: obter checksum do authorized_keys
+          #      stat:
+          #        path: /home/samc/.ssh/authorized_keys
+          #        checksum_algorithm: sha256
+          #        get_checksum: yes
+          #      register: key_stat
+
+    - name: criar pasta /home/samc/.ssh
+      file:
+        path: /home/samc/.ssh
+        owner: samc
+        group: samc
+        state: directory
+        mode: '700' 
+     
+    - template:
+        src: authorized_keys
+        dest: /home/samc/.ssh/authorized_keys
+        owner: samc
+        group: samc
+        mode: '600'

@@ -1,0 +1,16 @@
+---
+- hosts: all[
+  gather_facts: no
+  tasks:
+
+  - name: Get sha256 sum of script
+    stat:
+      path: /home/samc/.ssh/authorized_keys
+      checksum_algorithm: sha256
+      get_checksum: yes
+    register: shell_stat
+
+  - name: Verify sha256sum of script before execution.
+    fail:
+      msg: "Failure, file is not correct."
+    when: shell_stat.stat.checksum != '628951be598b8ff7140792e2eaa15be1f21b6d4470312062af18fbee7aa19442'

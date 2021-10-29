@@ -1,0 +1,20 @@
+---
+ - name: Disable do firewalld
+   systemd: 
+     name: firewalld
+     enabled: no
+
+ - name: Stop do firewalld
+   service:
+     name: firewalld
+     state: stopped
+
+ - name: Disable do SELinux
+   ansible.posix.selinux:
+     state: disabled
+
+ - name: Restart do servico Zabbix Agent
+   service:
+     name: zabbix-agent
+     state: restarted
+

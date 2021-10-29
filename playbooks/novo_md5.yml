@@ -1,0 +1,88 @@
+---
+- hosts: all
+  gather_facts: no
+  become: no 
+  vars:
+    pathimage: /images/W10-13.05-EstacaoTrabalhoMultihardware
+    imagem:
+      - arquivo: d1.original.uuids
+        hash_src: 1166e4693bb9e1edbea499aee3ca09a3
+      - arquivo: d1.original.fstypes
+        hash_src: 2cfd36a0e381b432a55b929f796ed3d4
+      - arquivo: d1.mbr
+        hash_src: 4b25621c8bd7afd28cf0b85e6c52a06c
+      - arquivo: d1.partitions
+        hash_src: 557915981f87017e4b49d64f75e81a6f
+      - arquivo: d1.original.swapuuids
+        hash_src: d41d8cd98f00b204e9800998ecf8427e
+      - arquivo: d1.minimum.partitions
+        hash_src: d4f63c48361b3e0eb43287dc1c839571
+      - arquivo: d1.fixed_size_partitions
+        hash_src: dbf5e5c41eccc1de3e8166f85148dcb8
+      - arquivo: d1p1.img
+        hash_src: e21aee22a51982629ff34fcba180443b
+      - arquivo: d1p2.img
+        hash_src: 256dcb9d64072dc2e0a349914348f2dc
+      - arquivo: d1p3.img
+        hash_src: 03400a13a416b55d94830a09ef93522f
+
+      
+
+  tasks:
+  
+          #- name: remove a pasta orig de dentro da imagem
+          #file:
+          #state: absent
+          #path: "{{ pathimage }}/orig/"
+
+
+  - name: stats dos arquivos
+    stat: path={{ pathimage }}/{{ item.arquivo }} checksum_algorithm=md5
+    register: r
+    loop: "{{ imagem }}"
+    
+    #  - name: debug do retorno
+    #    debug:
+    #      var: item
+    #    failed_when:  r.results.hash_src != r.results.item.stat.checksum
+    #    loop: "{{ r  | dict2items }}"
+    #    loop: "{{ r.results.item | dict2items }}"
+  
+  - name: "Looping over registered variables, Its msg field will contain desired output"
+    debug:
+            #      msg: "{{item.invocation.module_args.path}}: {{item.stat.exists}}"
+      msg: "{{item.stat.exists}} - {{item.stat.checksum}}: {{item.item.hash_src}}"
+      failed_when: item.stat.checksum  != item.item.hash_src
+    with_items:
+    - "{{r.results}}"
+
+    # name: Hash do arquivo d1p1.img
+    #et_fact:
+    # md5_orig: "{{ filestats.stat.checksum }}"  
+
+
+    # name: stats do arquivo d1p2.img
+    #tat: path={{ pathimage }}/d1p2.img checksum_algorithm=md5
+    #egister: filestats
+
+    # name: Hash do arquivo d1p2.img
+    #et_fact:
+    # md5_orig: "{{ filestats.stat.checksum }}"  
+
+    # name: alertar se o hash for diferente para d1p2.img
+    #ebug:
+    # msg: "ERRO NO ARQUIVO d1p2.img {{ filestats.stat.checksum }}"
+    #hen:  filestats != hashes.d1p2_img
+
+    # name: stats do arquivo d1.original.uuids
+    #tat: path={{ pathimage }}/d1.original.uuids checksum_algorithm=md5
+    #egister: filestats
+
+    # name: Hash do arquivo d1.original.uuids
+    #et_fact:
+    # md5_orig: "{{ filestats.stat.checksum }}"  
+
+    # name: alertar se o hash for diferente para d1.original.uuids
+    #ebug:
+    # msg: "ERRO NO ARQUIVO d1.original.uuids {{ filestats.stat.checksum }}"
+    #hen:  filestats != hashes.d1_original_uuids

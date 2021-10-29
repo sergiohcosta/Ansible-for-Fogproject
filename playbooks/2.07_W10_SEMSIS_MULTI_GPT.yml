@@ -1,0 +1,42 @@
+---
+- hosts: all
+  gather_facts: no
+  become: yes
+  vars:
+    pathimages: /images
+    imagename: 2.07_W10_SEMSIS_MULTI_GPT
+    pathimage: "{{pathimages}}/{{imagename}}"
+    md5local: "{{pathimages}}/{{imagename}}.local.md5"
+    md5remoto: "{{pathimages}}/{{imagename}}.md5"
+
+  tasks:
+  
+  - name: arquivo de hash oficial da imagem
+    get_url:
+      url: http://fogserver.tre-pr.jus.br/md5/{{ imagename }}.md5
+      dest: "{{ pathimages }}"
+  
+  - name: ler informacoes do arquivo de hash remoto
+    stat: path={{ md5remoto }} checksum_algorithm=md5
+    register: hashremoto
+  
+  - name: ler informacoes do arquivo de hash local
+    stat: path={{ md5local }} checksum_algorithm=md5
+    register: r
+
+#  - name: "debug"
+#    debug:
+#      msg: "{{r.stat}}"
+
+  - name: gerar o arquivo md5 caso nao exista
+    shell: md5sum {{ pathimage }}/* | sort > {{ md5local }}
+    when: not r.stat.exists or hashremoto.stat.checksum != r.stat.checksum
+    
+  - name: atualizar as informacoes do arquivo de hash local
+    stat: path={{ md5local }} checksum_algorithm=md5
+    register: r
+  
+  - name: comparar os hashes
+    debug:
+      msg: "IMAGEM DIFERENTE"
+    failed_when: hashremoto.stat.checksum != r.stat.checksum

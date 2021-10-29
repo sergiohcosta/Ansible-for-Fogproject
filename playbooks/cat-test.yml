@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - cat_module:
+        state: present
+        src: cat.jpg
+        dest: /tmp

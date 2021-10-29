@@ -1,0 +1,126 @@
+---
+- hosts: all
+  # gather_facts: no
+  become: yes
+  vars:
+    pathimages: /images
+    imagename: W10-13.07-EstacaoTrabalhoMultihardware
+    pathimage: "{{pathimages}}/{{imagename}}"
+    imagem:
+        #01f437fab7c3ff95325f755e70d47454  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1p2.img
+        #103af87e275455887448be88fcfe3412  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1p3.img
+        #1166e4693bb9e1edbea499aee3ca09a3  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.original.uuids
+        #2cfd36a0e381b432a55b929f796ed3d4  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.original.fstypes
+        #427bdb0c2dd419ffa24a79ba22ec51f4  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1p1.img
+        #5c845900105fda5c760c23764c28198d  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.partitions
+        #7373a41852a112caff9aac8d26493c65  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.mbr
+        #b264c14993cb602ca4d5481adce3bb15  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.minimum.partitions
+        #d41d8cd98f00b204e9800998ecf8427e  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.original.swapuuids
+        #dbf5e5c41eccc1de3e8166f85148dcb8  /images/W10-13.07-EstacaoTrabalhoMultihardware/d1.fixed_size_partitions
+      - arquivo: d1.original.uuids
+        hash_src: 1166e4693bb9e1edbea499aee3ca09a3
+      - arquivo: d1.original.fstypes
+        hash_src: 2cfd36a0e381b432a55b929f796ed3d4
+      - arquivo: d1.mbr
+        hash_src: 7373a41852a112caff9aac8d26493c65
+      - arquivo: d1.partitions
+        hash_src: 5c845900105fda5c760c23764c28198d
+      - arquivo: d1.original.swapuuids
+        hash_src: d41d8cd98f00b204e9800998ecf8427e
+      - arquivo: d1.minimum.partitions
+        hash_src: b264c14993cb602ca4d5481adce3bb15
+      - arquivo: d1.fixed_size_partitions
+        hash_src: dbf5e5c41eccc1de3e8166f85148dcb8
+        #      - arquivo: d1p1.img
+        #        hash_src: 427bdb0c2dd419ffa24a79ba22ec51f4
+        #      - arquivo: d1p2.img
+        #        hash_src: 01f437fab7c3ff95325f755e70d47454
+        #      - arquivo: d1p3.img
+        #        hash_src: 103af87e275455887448be88fcfe3412
+
+      
+
+  tasks:
+  
+          #- name: remove a pasta orig de dentro da imagem
+          #file:
+          #state: absent
+          #path: "{{ pathimage }}/orig/"
+
+  - name: stats dos arquivos
+    stat: path={{ pathimage }}/{{ item.arquivo }} checksum_algorithm=md5
+    register: r
+    loop: "{{ imagem }}"
+    
+    #  - name: debug do retorno
+    #    debug:
+    #      var: item
+    #    failed_when:  r.results.hash_src != r.results.item.stat.checksum
+    #    loop: "{{ r  | dict2items }}"
+    #    loop: "{{ r.results.item | dict2items }}"
+  
+  - name: "checagem de hash"
+    debug:
+            #      msg: "{{item.invocation.module_args.path}}: {{item.stat.exists}}"
+            msg: "{{item.item.arquivo}} - {{item.stat.exists}} - {{item.stat.checksum}} != {{item.item.hash_src}}"
+    when: item.stat.checksum  != item.item.hash_src
+    #failed_when: item.stat.checksum  != item.item.hash_src
+    with_items:
+    - "{{r.results}}"
+   
+  #- name: debug de path so pra teste
+  #  debug:  #/mnt/d/Comum/fog/images/W10-7.05-PostoAtendimentoMultihardware
+  #    msg: "### /mnt/d/Comum/fog/images/{{imagename}}/{{item.item.arquivo}} ### {{pathimage}}/{{item.item.arquivo}} ###"
+  #  when: item.stat.checksum  != item.item.hash_src
+  #  with_items:
+  #  - "{{r.results}}"
+
+
+  - name: Copy file with owner and permissions
+    copy:
+      src: "/mnt/d/Comum/fog/images/{{imagename}}/{{item.item.arquivo}}"
+      dest: "{{pathimage}}/{{item.item.arquivo}}"
+      owner: fog
+      group: fog
+      mode: '0644'
+    when: item.stat.checksum  != item.item.hash_src
+    with_items:
+    - "{{r.results}}"
+    
+    # name: Hash do arquivo d1p1.img
+    #et_fact:
+    # md5_orig: "{{ filestats.stat.checksum }}"  
+
+
+    # name: stats do arquivo d1p2.img
+    #tat: path={{ pathimage }}/d1p2.img checksum_algorithm=md5
+    #egister: filestats
+
+    # name: Hash do arquivo d1p2.img
+    #et_fact:
+    # md5_orig: "{{ filestats.stat.checksum }}"  
+
+    # name: alertar se o hash for diferente para d1p2.img
+    #ebug:
+    # msg: "ERRO NO ARQUIVO d1p2.img {{ filestats.stat.checksum }}"
+    #hen:  filestats != hashes.d1p2_img
+
+    # name: stats do arquivo d1.original.uuids
+    #tat: path={{ pathimage }}/d1.original.uuids checksum_algorithm=md5
+    #egister: filestats
+
+    # name: Hash do arquivo d1.original.uuids
+    #et_fact:
+    # md5_orig: "{{ filestats.stat.checksum }}"  
+
+    # name: alertar se o hash for diferente para d1.original.uuids
+    #ebug:
+    # msg: "ERRO NO ARQUIVO d1.original.uuids {{ filestats.stat.checksum }}"
+    #hen:  filestats != hashes.d1_original_uuids
+    
+      
+      
+      
+      #/mnt/d/Comum/fog/images/W10-7.05-PostoAtendimentoMultihardware
+
+
